@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Animated Calculator with Voice</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      transition: background-color 0.5s;
+    }
+    .calculator-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .calculator {
+      width: 300px;
+      background-color: var(--bg);
+      border-radius: 15px;
+      transition: background 0.5s ease;
+    }
+    button {
+      width: 100%;
+      padding: 15px;
+      font-size: 18px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 10px;
+      background-color: #eeeeee;
+      box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.1s ease;
+    }
+    button:active {
+      transform: scale(0.95);
+      background-color: #ccc;
+    }
+    .theme-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+    }
+    body.day {
+      background-color: #f0f0f0;
+    }
+    body.night {
+      background-color: #121212;
+      color: white;
+    }
+    .night .calculator {
+      background-color: #1f1f1f;
+    }
+    #door {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #6e4f3a;
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: transform 2s ease-in-out;
+    }
+  </style>
+</head>
+<body id="main-body">
+  <!-- Opening Door Animation -->
+  <div id="door">
+    <h1 style="color:white; font-size:2em;">Welcome</h1>
+  </div>
+
+  <audio id="doorSound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
+
+  <!-- Theme Toggle -->
+  <div class="theme-toggle">
+    <button class="btn btn-warning" onclick="toggleTheme()">🌞/🌙</button>
+  </div>
+
+  <!-- Calculator -->
+  <div class="calculator-container">
+    <div class="calculator card shadow-lg p-3">
+      <input type="text" id="display" class="form-control mb-3 text-end" readonly>
+      <div class="buttons row">
+        <div class="col-3"><button onclick="press('7')">7</button></div>
+        <div class="col-3"><button onclick="press('8')">8</button></div>
+        <div class="col-3"><button onclick="press('9')">9</button></div>
+        <div class="col-3"><button onclick="press('/')">÷</button></div>
+
+        <div class="col-3"><button onclick="press('4')">4</button></div>
+        <div class="col-3"><button onclick="press('5')">5</button></div>
+        <div class="col-3"><button onclick="press('6')">6</button></div>
+        <div class="col-3"><button onclick="press('*')">×</button></div>
+
+        <div class="col-3"><button onclick="press('1')">1</button></div>
+        <div class="col-3"><button onclick="press('2')">2</button></div>
+        <div class="col-3"><button onclick="press('3')">3</button></div>
+        <div class="col-3"><button onclick="press('-')">−</button></div>
+
+        <div class="col-3"><button onclick="press('0')">0</button></div>
+        <div class="col-3"><button onclick="press('.')">.</button></div>
+        <div class="col-3"><button onclick="calculate()">=</button></div>
+        <div class="col-3"><button onclick="press('+')">+</button></div>
+
+        <div class="col-12 mt-2"><button class="btn btn-danger w-100" onclick="clearDisplay()">Clear</button></div>
+        <div class="col-12 mt-2"><button class="btn btn-info w-100" onclick="startVoiceInput()">🎤 Voice</button></div>
+        <div class="col-12 mt-2"><button class="btn btn-secondary w-100" onclick="closeDoorAndReset()">🚪 Exit</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let expression = '';
+
+    // Opening door on load
+    window.addEventListener('load', function () {
+      const door = document.getElementById('door');
+      setTimeout(() => {
+        document.getElementById('doorSound').play();
+        door.style.transform = 'translateX(-100%)';
+        setTimeout(() => {
+          door.style.display = 'none';
+        }, 2000);
+      }, 1000);
+    });
+
+    function press(value) {
+      expression += value;
+      document.getElementById('display').value = expression;
+    }
+
+    function calculate() {
+      try {
+        expression = eval(expression).toString();
+        document.getElementById('display').value = expression;
+      } catch (e) {
+        document.getElementById('display').value = "Error";
+        expression = '';
+      }
+    }
+
+    function clearDisplay() {
+      expression = '';
+      document.getElementById('display').value = '';
+    }
+
+    function toggleTheme() {
+      const body = document.getElementById('main-body');
+      body.classList.toggle('day');
+      body.classList.toggle('night');
+    }
+
+    function closeDoorAndReset() {
+      const door = document.getElementById('door');
+      door.style.display = 'flex';
+      door.style.transform = 'translateX(0)';
+      document.getElementById('doorSound').play();
+      setTimeout(() => {
+        clearDisplay();
+        location.reload();
+      }, 2000);
+    }
+
+    // Keyboard support
+    document.addEventListener('keydown', function (e) {
+      const key = e.key;
+      if (!isNaN(key) || ['+', '-', '*', '/', '.'].includes(key)) {
+        press(key);
+      } else if (key === 'Enter') {
+        e.preventDefault();
+        calculate();
+      } else if (key === 'Backspace') {
+        e.preventDefault();
+        expression = expression.slice(0, -1);
+        document.getElementById('display').value = expression;
+      } else if (key.toLowerCase() === 'c') {
+        clearDisplay();
+      }
+    });
+
+    // Voice input
+    function startVoiceInput() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.start();
+      recognition.onresult = function(event) {
+        const speechResult = event.results[0][0].transcript;
+        const parsed = speechResult
+          .replace(/plus/gi, '+')
+          .replace(/minus/gi, '-')
+          .replace(/times|multiply/gi, '*')
+          .replace(/divided by|divide/gi, '/')
+          .replace(/equals|equal/gi, '=');
+
+        const cleaned = parsed.replace(/[^0-9+\-*/.]/g, '');
+        expression = cleaned;
+        document.getElementById('display').value = expression;
+        if (cleaned.includes('+') || cleaned.includes('-') || cleaned.includes('*') || cleaned.includes('/')) {
+          calculate();
+        }
+      };
+
+      recognition.onerror = function(event) {
+        alert('Error with speech recognition: ' + event.error);
+      };
+    }
+  </script>
+</body>
+</html>
